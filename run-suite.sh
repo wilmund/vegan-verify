@@ -15,13 +15,15 @@
 
 set -u
 DEVSHA="${1:-unknown-sha}"
-DATE=$(date +%Y-%m-%d)
+# Reports are append-only records: a UTC date+time stamp in the filename so
+# a same-day re-run can never silently overwrite an earlier report.
+STAMP=$(date -u +%Y-%m-%d-%H%MZ)
 mkdir -p reports
 FAILS=0
 
-Rscript run-probes.R "CRAN release" > "reports/$DATE-cran.txt" 2>&1 || FAILS=$((FAILS+1))
-R_LIBS=/tmp/devlib Rscript run-probes.R "dev head $DEVSHA" > "reports/$DATE-dev-$DEVSHA.txt" 2>&1 || FAILS=$((FAILS+1))
+Rscript run-probes.R "CRAN release" > "reports/$STAMP-cran.txt" 2>&1 || FAILS=$((FAILS+1))
+R_LIBS=/tmp/devlib Rscript run-probes.R "dev head $DEVSHA" > "reports/$STAMP-dev-$DEVSHA.txt" 2>&1 || FAILS=$((FAILS+1))
 
-tail -1 "reports/$DATE-cran.txt"
-tail -1 "reports/$DATE-dev-$DEVSHA.txt"
+tail -1 "reports/$STAMP-cran.txt"
+tail -1 "reports/$STAMP-dev-$DEVSHA.txt"
 exit $FAILS

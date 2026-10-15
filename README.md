@@ -45,9 +45,21 @@ general tooling at [verify-toolkit](https://github.com/wilmund/verify-toolkit).
 | `renyi()`/`tsallis()` | direct formulas across scales + internal consistency with `diversity()` |
 | `fisher.alpha()` | solution-substitution: S = α·log(1 + N/α) |
 
-**Tier 2 — exhaustive-enumeration oracles (planned):** `adonis2`,
-`anosim`, `mrpp`, `mantel`, `protest` with *all* permutations enumerated
-on tiny designs, exact p-values compared.
+**Tier 2 — exhaustive-enumeration oracles (live):** every probe
+enumerates **all 6! = 720 orderings** of a 6-site design in base R and
+compares vegan's reported significance against the exact permutation
+p-value (vegan is handed the 719 non-identity orderings explicitly, so
+`(hits+1)/(nperm+1)` *is* the exact p — the +1 is the identity, which
+always hits). Statistics are recomputed from their definitions on
+hand-built distance matrices, never with `vegdist()`.
+
+| Probe | Oracle |
+|---|---|
+| `adonis2()` | pseudo-F from the McArdle–Anderson sums of squares (SS_total = Σd²/n, within-group SS by group), R², exact p |
+| `anosim()` | R = (mean between-rank − mean within-rank)/(M/2) from base-R ranks, exact p |
+| `mrpp()` | δ per weight type (1/2/3 on an unbalanced design), E(δ) = plain mean of all pairwise dissimilarities (closed form), A = 1 − δ/E(δ), exact p per weight type |
+| `mantel()` | Pearson/Spearman correlation of lower triangles from the explicit formula, exact p |
+| `protest()` | t0 = sum of singular values of X'Y after centering + unit-norm scaling (closed-form orthogonal Procrustes), ss = 1 − t0², exact p |
 
 **Tier 3 — algebraic identities (planned):** `rda`/`cca` eigenvalues vs
 hand SVD + inertia accounting, `betadisper` centroid distances recomputed
@@ -66,7 +78,7 @@ vegan is first on the library path; exit status 1 on any failure.
 
 ## Status
 
-Tier 1 (105 checks) green against CRAN 2.8.0 and dev head as of the
+Tiers 1+2 (127 checks) green against CRAN 2.8.0 and dev head as of the
 latest report in `reports/`. Maintainers: this suite is strictly opt-in
 courtesy infrastructure — if any part of it is unwelcome, say so and it
 changes or stops.

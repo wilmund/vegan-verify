@@ -48,3 +48,31 @@ harness_summary <- function() {
   }
   sum(!ok)
 }
+
+# --- Tier 2 helpers: exhaustive permutation enumeration ------------------
+#
+# all_perms(n) returns every ordering of 1..n as an n! x n integer matrix,
+# built by plain recursion in base R (no permute package: the enumeration
+# is part of the oracle, so it must not come from vegan's dependency).
+# perms_no_identity(n) drops the identity row: vegan's permutation tests
+# compute p = (hits + 1)/(nperm + 1) over a SUPPLIED matrix, so feeding the
+# n! - 1 non-identity orderings makes the reported p exactly equal to the
+# full-enumeration p (the +1 is the identity, which always "hits").
+
+all_perms <- function(n) {
+  if (n == 1L) return(matrix(1L, 1L, 1L))
+  sub <- all_perms(n - 1L)
+  rows <- nrow(sub)
+  out <- matrix(0L, rows * n, n)
+  for (k in seq_len(n)) {
+    rest <- setdiff(seq_len(n), k)
+    out[(k - 1L) * rows + seq_len(rows), ] <-
+      cbind(rep(k, rows), matrix(rest[sub], rows, n - 1L))
+  }
+  out
+}
+
+perms_no_identity <- function(n) {
+  P <- all_perms(n)
+  P[!apply(P, 1L, function(r) all(r == seq_len(n))), , drop = FALSE]
+}
