@@ -15,10 +15,16 @@
 
 set -u
 DEVSHA="${1:-unknown-sha}"
-# Reports are append-only records: a UTC date+time stamp in the filename so
-# a same-day re-run can never silently overwrite an earlier report.
-STAMP=$(date -u +%Y-%m-%d-%H%MZ)
+# Reports are append-only records: a UTC date+time stamp (to the second) in
+# the filename, PLUS a hard refusal to overwrite — a minute-resolution stamp
+# proved insufficient when two suite runs (~15 s/target) landed in the same
+# minute and the second silently ate the first's reports.
+STAMP=$(date -u +%Y-%m-%d-%H%M%SZ)
 mkdir -p reports
+if [ -e "reports/$STAMP-cran.txt" ] || [ -e "reports/$STAMP-dev-$DEVSHA.txt" ]; then
+    echo "refusing to overwrite existing report with stamp $STAMP" >&2
+    exit 99
+fi
 FAILS=0
 
 Rscript run-probes.R "CRAN release" > "reports/$STAMP-cran.txt" 2>&1 || FAILS=$((FAILS+1))

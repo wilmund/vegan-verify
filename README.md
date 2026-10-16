@@ -61,10 +61,14 @@ hand-built distance matrices, never with `vegdist()`.
 | `mantel()` | Pearson/Spearman correlation of lower triangles from the explicit formula, exact p |
 | `protest()` | t0 = sum of singular values of X'Y after centering + unit-norm scaling (closed-form orthogonal Procrustes), ss = 1 − t0², exact p |
 
-**Tier 3 — algebraic identities (planned):** `rda`/`cca` eigenvalues vs
-hand SVD + inertia accounting, `betadisper` centroid distances recomputed
-from PCoA coordinates, stress of `metaMDS`'s returned configuration,
-`specaccum(method="exact")` vs brute force.
+**Tier 3 — algebraic / internal-consistency oracles (live):**
+
+| Probe | Oracle |
+|---|---|
+| `rda()`/`cca()` | eigenvalues = base-R `svd()` of the definitional init matrix (centered `Y/sqrt(n-1)` for RDA, chi-square-standardized `Q` for CCA); constrained/residual eigenvalues via explicit (row-weighted) QR projection; inertia accounting total = constrained + unconstrained; `inertcomp()` grand sum = total |
+| `betadisper()` | distances to centroid rebuilt from a hand PCoA (double-centering, eigen, sqrt-scaled axes) **including the negative-eigenvalue correction** — the input is Bray on counts, so a negative eigenvalue is genuinely present (asserted) |
+| `monoMDS()` | stress of the *returned* configuration recomputed from Kruskal's definition — `dhat` via a base-R pool-adjacent-violators isotonic regression, stress forms 1 and 2, plus the `model="linear"` OLS variant vs `lm()`; the fixed dissimilarity matrix conflicts with any 1-D embedding so the fit is non-trivial (stress ≈ 0.43) and PAVA must pool |
+| `specaccum()` | `method="exact"` = closed form Σ(1 − C(n−fᵢ,k)/C(n,k)) = brute-force mean over **all 120 site orderings**; `method="random"` handed all orderings must reproduce the brute-force mean and sd |
 
 Deliberately excluded: null-model internals (`oecosimu`) and anything
 where an oracle would have to re-implement vegan's own algorithm —
@@ -78,7 +82,7 @@ vegan is first on the library path; exit status 1 on any failure.
 
 ## Status
 
-Tiers 1+2 (127 checks) green against CRAN 2.8.0 and dev head as of the
-latest report in `reports/`. Maintainers: this suite is strictly opt-in
+Tiers 1+2+3 (164 checks) green against CRAN 2.8.0 and dev head as of the
+latest report in `reports/`. This completes the planned probe list. Maintainers: this suite is strictly opt-in
 courtesy infrastructure — if any part of it is unwelcome, say so and it
 changes or stops.
